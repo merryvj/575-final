@@ -7,6 +7,17 @@ let accelY = 0;
 let accelZ = 0;
 let direction = "down";
 
+let rotation_degrees = 0;
+let frontToBack_degrees = 0;
+let leftToRight_degrees = 0;
+let px = 0.0;
+let py = 0.0;
+let vx = 0.0; // Velocity x and y
+let vy = 0.0;
+let updateRate = 1 / 10; // Sensor refresh rate
+let pointerX = 0;
+let pointerY = 0;
+
 // Connect to our websocket server , this server was created when you typed `node index.js`
 const ws = new WebSocket("ws://localhost:8080")
 
@@ -37,30 +48,27 @@ ws.onmessage = (event) => {
         accelTotal = Math.abs(accelX) + Math.abs(accelY) + Math.abs(accelX);
         
         //Math.abs(accelX) + Math.abs(accelY) + Math.abs(accelX);
-        console.log(accelTotal);
+        //console.log(accelTotal);
+
+
+        rotation_degrees = sensorData.gyro.z;
+        frontToBack_degrees = sensorData.gyro.x;
+        leftToRight_degrees = sensorData.gyro.y;
+        
     }
-    // You might want to see how the data is recieved, uncomment this line
-    //console.log(sensorData)
-    // if(sensorData.touch.length > 0){
-    //     const firstFingerTouch = sensorData.touch[0];
-    //     // set the global variables touchX, touchY
-    //     // firstFingerTouch.x goes from -1 to 1 (also the y), so we map it to out canvas coordinates
-    //     touchX = map(firstFingerTouch.x, -1, 1, 0, 400);
-    //     touchY = map(firstFingerTouch.y, -1, 1, 0, 400);
-    // }
 }
 
 
 
 let song;
 let img;
+let blobs = [];
 
 function preload() {
-    song = loadSound('assets/songs/lane8.mp3');
-    img = loadImage('https://images.unsplash.com/photo-1511489731872-324afc650052?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=988&q=80');
+    //song = loadSound('assets/songs/lane8.mp3');
+    img = loadImage('https://images.unsplash.com/photo-1518022525094-218670c9b745?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=987&q=80');
 
 }
-
 
 function setup(){
     createCanvas(100, 100);
@@ -70,34 +78,36 @@ function setup(){
 }
 
 function draw(){
-    img.loadPixels();
-    // for (let i = 0; i < width - 20; i+=20) {
-    //     for (let j = 0; j < height - 20; j+=20){
-    //         ellipse(i + 10, j + 10, 10);
-    //     }
+
+    let pixColor = color(get(pointerX, pointerY));
+    pixColor.setAlpha(map(accelTotal, 0, 5, 0, 255));
+    blobs.push(new Blob(pixColor, pointerX, pointerY, vx, vy));
+
+    
+
+    movePointer();
+
+    // img.loadPixels();
+    // let yPix = Math.abs(accelY);
+    // yPix = map(yPix, 0, 2, 0, 1000);
+    // for (let i = 0; i < yPix; i++) {
+    //     sortPixelsY();
+    // }
+    // let xPix = Math.abs(accelX);
+
+    // xPix = map(xPix, 0, 1, 0, 1000);
+    // for (let j = 0; j < xPix; j++) {
+    //     sortPixelsX();
     // }
 
-    let yPix = Math.abs(accelY);
-    yPix = map(yPix, 0, 2, 0, 1000);
-    for (let i = 0; i < yPix; i++) {
-        sortPixelsY();
-    }
+    // // console.log("x " + xPix);
+    // // console.log("y " + yPix);
 
-    let xPix = Math.abs(accelX);
-
-    xPix = map(xPix, 0, 2, 0, 1000);
-    for (let j = 0; j < xPix; j++) {
-        sortPixelsX();
-    }
-
-    // console.log("x " + xPix);
-    // console.log("y " + yPix);
-
-    img.updatePixels();
-    image(img, 0, 0, width, height);
+    // img.updatePixels();
+    // image(img, 0, 0, width, height);
 
 
-    song.rate(accelTotal);
+    //song.rate(accelTotal);
     
 }
 
@@ -105,16 +115,29 @@ function sortPixelsX() {
     const x = random(img.width - 1);
     const y = random(img.height - 1);
     let colorOne = img.get(x, y);
-    let colorTwo;
-    colorTwo = img.get(x+1, y);
+    let colorTwo = img.get(x + 1, y);
     
     totalOne = getColorTotal(colorOne);
     totalTwo = getColorTotal(colorTwo);
 
-    if (totalOne < totalTwo){
+
+    // if (accelX > 0) {
+    //     colorTwo = img.get(x - 1, y);
+    //     totalTwo = getColorTotal(colorTwo);
+    //     img.set(x, y, colorTwo);
+    //     img.set(x - 1, y, colorOne);
+    // } else if (accelX < 0){
+    //     colorTwo = img.get(x + 1, y);
+    //     totalTwo = getColorTotal(colorTwo);
+    //     img.set(x, y, colorTwo);
+    //     img.set(x + 1, y, colorOne);
+    // }
+
+    if (totalOne < totalTwo && accelX > 0){
         img.set(x, y, colorTwo);
         img.set(x + 1, y, colorOne);
-    } else {
+
+    } else if (totalOne > totalTwo && accelX < 0){
         img.set(x, y, colorTwo);
         img.set(x + 1, y, colorOne);
     }
@@ -149,4 +172,56 @@ function getColorTotal(color) {
 
 function playSong(){
     song.play();
+}
+
+function finishMoves() {
+    makeDrawing();
+}
+
+
+class Blob {
+    constructor(color, x, y, height, width) {
+        this.color = color;
+        this.x = x;
+        this.y = y;
+        this.height = height;
+        this.width = width;
+    }
+}
+
+function makeDrawing() {
+    console.log(blobs);
+    clear();
+
+    noStroke();
+    for (let b of blobs) {
+        fill(b.color);
+        ellipse(b.x, b.y, b.width, b.height);
+    }
+
+}
+
+function movePointer() {
+    // Update velocity according to how tilted the phone is
+    // Since phones are narrower than they are long, double the increase to the x velocity
+    vx = vx + leftToRight_degrees * updateRate * 2;
+    vy = vy + frontToBack_degrees * updateRate;
+
+    // Update position and clip it to bounds
+    px = px + vx * 0.5;
+    if (px > width || px < 0) {
+      px = Math.max(0, Math.min(width, px)); 
+      vx = 0;
+    }
+
+    py = py + vy * 0.5;
+    if (py > height || py < 0) {
+      py = Math.max(0, Math.min(height, py)); 
+      vy = 0;
+    }
+
+    pointerX = Math.floor(px);
+    pointerY = Math.floor(py);
+
+
 }
