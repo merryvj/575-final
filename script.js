@@ -1,7 +1,10 @@
 let touchX = 0;
 let touchY = 0;
 
-let accel = 0;
+let accelTotal = 0;
+let accelX = 0;
+let accelY = 0;
+let accelZ = 0;
 let direction = "down";
 
 // Connect to our websocket server , this server was created when you typed `node index.js`
@@ -12,14 +15,29 @@ ws.onmessage = (event) => {
     const dataAsObject = JSON.parse(dataAsString)
     const sensorData = dataAsObject.sensordata;
     if (sensorData) {
-        accel = sensorData.accel.x + sensorData.accel.y + sensorData.accel.z;
-        if (sensorData.accel.x > 0 && sensorData.accel.x > sensorData.accel.y) {
-            direction = 'left';
-        } else {
-            direction = 'down';
+
+        accelX = sensorData.accel.x;
+        accelY = sensorData.accel.y;
+        accelZ = sensorData.accel.z;
+        
+        if (accelX < 0.1) {
+            accelX = 0;
+        } 
+
+        if (accelY < 0.1) {
+            accelY = 0;
         }
 
-        console.log(direction);
+        if (accelX < 0.1) {
+            accelX = 0;
+        }
+        // accelX = sensorData.accel.x - sensorData.gravity.x;
+        // accelY = sensorData.accel.y - sensorData.gravity.y;
+        // accelZ = sensorData.accel.z - sensorData.gravity.z;
+        accelTotal = Math.abs(accelX) + Math.abs(accelY) + Math.abs(accelX);
+        
+        //Math.abs(accelX) + Math.abs(accelY) + Math.abs(accelX);
+        console.log(accelTotal);
     }
     // You might want to see how the data is recieved, uncomment this line
     //console.log(sensorData)
@@ -59,52 +77,68 @@ function draw(){
     //     }
     // }
 
-    if (accel > 0.5){
-        for (let i = 0; i < accel * 100; i++) {
-            sortPixels();
-        }
+    let yPix = Math.abs(accelY);
+    yPix = map(yPix, 0, 2, 0, 1000);
+    for (let i = 0; i < yPix; i++) {
+        sortPixelsY();
     }
+
+    let xPix = Math.abs(accelX);
+
+    xPix = map(xPix, 0, 2, 0, 1000);
+    for (let j = 0; j < xPix; j++) {
+        sortPixelsX();
+    }
+
+    // console.log("x " + xPix);
+    // console.log("y " + yPix);
 
     img.updatePixels();
     image(img, 0, 0, width, height);
 
 
-    song.rate(accel/1);
-    console.log(accel);
+    song.rate(accelTotal);
     
 }
 
-
-
-
-function sortPixels() {
-    const x = random(img.width);
+function sortPixelsX() {
+    const x = random(img.width - 1);
     const y = random(img.height - 1);
     let colorOne = img.get(x, y);
     let colorTwo;
-    let totalOne, totalTwo;
+    colorTwo = img.get(x+1, y);
+    
+    totalOne = getColorTotal(colorOne);
+    totalTwo = getColorTotal(colorTwo);
 
-    switch(direction){
-        case 'down':
-            colorTwo = img.get(x, y + 1);
-            totalOne = getColorTotal(colorOne);
-            totalTwo = getColorTotal(colorTwo);
+    if (totalOne < totalTwo){
+        img.set(x, y, colorTwo);
+        img.set(x + 1, y, colorOne);
+    } else {
+        img.set(x, y, colorTwo);
+        img.set(x + 1, y, colorOne);
+    }
+}
 
-            if (totalOne > totalTwo) {
-                img.set(x, y, colorTwo);
-                img.set(x, y + 1, colorOne);
-            }
-            break;
-        case 'left': 
-            colorTwo = img.get(x + 1, y);
-            totalOne = getColorTotal(colorOne);
-            totalTwo = getColorTotal(colorTwo);
+function sortPixelsY() {
+    const x = random(img.width);
+    const y = random(img.height - 1);
+    const colorOne = img.get(x, y);
+    const colorTwo = img.get(x, y + 1);
+  
+    const totalOne = getColorTotal(colorOne);
+    const totalTwo = getColorTotal(colorTwo);
+  
 
-            if (totalOne > totalTwo) {
-                img.set(x, y, colorTwo);
-                img.set(x + 1, y, colorOne);
-            }  
-            break;
+    //up
+    if (totalOne < totalTwo && accelY > 0) {
+        img.set(x, y, colorTwo);
+        img.set(x, y + 1, colorOne);
+    }
+    //down
+    else if (totalOne > totalTwo && accelY < 0) {
+        img.set(x, y, colorTwo);
+        img.set(x, y + 1, colorOne);
     }
 }
 
