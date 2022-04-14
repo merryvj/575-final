@@ -1,0 +1,13 @@
+
+body {
+    display: flex;
+    justify-content: center;
+    background-color: #000;
+}
+
+
+canvas{
+    height: 100vmin !important;
+    width: 100vmin !important;
+ 
+}
