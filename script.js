@@ -105,8 +105,11 @@ function draw(){
     img.updatePixels();
     image(img, 0, 0, width, height);
 
-
-    song.rate(accelTotal);
+    let rate = accelTotal;
+    if (rate > 1) {
+        rate = 1;
+    }
+    song.rate(rate);
     
 }
 
