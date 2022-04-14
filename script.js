@@ -65,7 +65,7 @@ let img;
 let blobs = [];
 
 function preload() {
-    //song = loadSound('assets/songs/lane8.mp3');
+    song = loadSound('assets/songs/lane8.mp3');
     img = loadImage('https://images.unsplash.com/photo-1518022525094-218670c9b745?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=987&q=80');
 
 }
@@ -78,7 +78,6 @@ function setup(){
 }
 
 function draw(){
-
     let pixColor = color(get(pointerX, pointerY));
     pixColor.setAlpha(map(accelTotal, 0, 5, 0, 255));
     blobs.push(new Blob(pixColor, pointerX, pointerY, vx, vy));
@@ -87,27 +86,27 @@ function draw(){
 
     movePointer();
 
-    // img.loadPixels();
-    // let yPix = Math.abs(accelY);
-    // yPix = map(yPix, 0, 2, 0, 1000);
-    // for (let i = 0; i < yPix; i++) {
-    //     sortPixelsY();
-    // }
-    // let xPix = Math.abs(accelX);
+    img.loadPixels();
+    let yPix = Math.abs(accelY);
+    yPix = map(yPix, 0, 2, 0, 1000);
+    for (let i = 0; i < yPix; i++) {
+        sortPixelsY();
+    }
+    let xPix = Math.abs(accelX);
 
-    // xPix = map(xPix, 0, 1, 0, 1000);
-    // for (let j = 0; j < xPix; j++) {
-    //     sortPixelsX();
-    // }
+    xPix = map(xPix, 0, 1, 0, 1000);
+    for (let j = 0; j < xPix; j++) {
+        sortPixelsX();
+    }
 
-    // // console.log("x " + xPix);
-    // // console.log("y " + yPix);
+    // console.log("x " + xPix);
+    // console.log("y " + yPix);
 
-    // img.updatePixels();
-    // image(img, 0, 0, width, height);
+    img.updatePixels();
+    image(img, 0, 0, width, height);
 
 
-    //song.rate(accelTotal);
+    song.rate(accelTotal);
     
 }
 
